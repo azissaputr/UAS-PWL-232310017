@@ -1,0 +1,623 @@
+{
+  "name": "test project 1 - v3",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const json = $input.item.json;\n\n\nlet cvText = '';\n\nif (typeof json.content === 'string' && json.content.trim().length > 20) {\n  cvText = json.content.trim();\n}\n\nelse if (typeof json.response === 'string' && json.response.trim().length > 20) {\n  cvText = json.response.trim();\n}\n\nelse if (typeof json.message === 'string' && json.message.trim().length > 20) {\n  cvText = json.message.trim();\n}\n\nelse if (json.choices && Array.isArray(json.choices) && json.choices[0]?.message?.content) {\n  cvText = json.choices[0].message.content.trim();\n}\n\nelse if (typeof json.output === 'string' && json.output.trim().length > 20 && json.output !== json.text) {\n  cvText = json.output.trim();\n}\n\nelse {\n  const skip = ['text', 'binaryProperty', 'model', 'id', 'object', 'system_fingerprint'];\n  for (const key of Object.keys(json)) {\n    if (skip.includes(key)) continue;\n    const val = json[key];\n    if (typeof val === 'string' && val.trim().length > 100) {\n      cvText = val.trim();\n      break;\n    }\n  }\n}\n\n\nconst formData = $('Application Form3').item.json;\nconst positionApplied = formData['Position Applied'] || 'Fullstack Developer';\n\n\nconst isValid = cvText.length > 50;\n\nreturn {\n  json: {\n    cvText: cvText,\n    positionApplied: positionApplied,\n    cvLength: cvText.length,\n    cvValid: isValid\n  }\n};"
+      },
+      "id": "7fd04380-6197-42f3-b8ca-437a17a58fe6",
+      "name": "Normalize CV Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        7600,
+        4096
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "formTitle": "Submit Your Application",
+        "formDescription": "Complete the form below and upload your CV. ⚠️ ONLY PDF files are accepted — other formats will be rejected. Our AI will evaluate your qualifications for the selected position.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "placeholder": "e.g., Jane Doe",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "placeholder": "e.g., user@example.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Date of Birth",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Position Applied",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Fullstack Developer"
+                  },
+                  {
+                    "option": "Frontend Developer"
+                  },
+                  {
+                    "option": "Backend Developer"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Upload CV",
+              "fieldType": "file",
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "appendAttribution": false,
+          "buttonLabel": "Submit Application",
+          "path": "2942260e-be32-45ed-8864-a2112a92dc5a",
+          "customCss": "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');\n\n:root {\n\t--font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;\n\t--color-bg: #080c18;\n\t--color-card: rgba(13, 20, 38, 0.85);\n\t--color-border: rgba(139, 92, 246, 0.12);\n\t--color-input-bg: rgba(10, 15, 30, 0.9);\n\t--color-text: #e2e8f0;\n\t--color-muted: #64748b;\n\t--color-accent: #8b5cf6;\n\t--radius: 14px;\n\t--transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);\n}\n\n@keyframes slideUp {\n\tfrom { opacity: 0; transform: translateY(40px) scale(0.98); }\n\tto { opacity: 1; transform: translateY(0) scale(1); }\n}\n\n@keyframes gradientMove {\n\t0%, 100% { background-position: 0% 50%; }\n\t50% { background-position: 100% 50%; }\n}\n\n@keyframes breathe {\n\t0%, 100% { opacity: 0.3; transform: scale(1); }\n\t50% { opacity: 0.6; transform: scale(1.05); }\n}\n\n@keyframes topBarGlow {\n\t0% { background-position: -200% 0; }\n\t100% { background-position: 200% 0; }\n}\n\nbody {\n\tbackground: var(--color-bg);\n\tbackground-image:\n\t\tradial-gradient(ellipse at 15% 85%, rgba(139,92,246,0.15) 0%, transparent 55%),\n\t\tradial-gradient(ellipse at 85% 15%, rgba(59,130,246,0.10) 0%, transparent 55%),\n\t\tradial-gradient(ellipse at 50% 50%, rgba(168,85,247,0.08) 0%, transparent 65%),\n\t\tradial-gradient(ellipse at 80% 80%, rgba(236,72,153,0.05) 0%, transparent 50%);\n\tbackground-size: 300% 300%;\n\tanimation: gradientMove 25s ease-in-out infinite;\n\tfont-family: var(--font-family);\n\tdisplay: flex;\n\talign-items: center;\n\tjustify-content: center;\n\tmin-height: 100vh;\n\tmargin: 0;\n\tcolor: var(--color-muted);\n\tline-height: 1.6;\n\t-webkit-font-smoothing: antialiased;\n\toverflow-x: hidden;\n}\n\n.form-container {\n\tpadding: 2rem 1rem;\n\tposition: relative;\n\tz-index: 1;\n}\n\n.card {\n\tbackground: var(--color-card);\n\tbackdrop-filter: blur(30px) saturate(200%);\n\t-webkit-backdrop-filter: blur(30px) saturate(200%);\n\tborder-radius: 24px;\n\tborder: 1px solid var(--color-border);\n\tbox-shadow:\n\t\t0 30px 80px rgba(0,0,0,0.5),\n\t\t0 0 0 1px rgba(139,92,246,0.04),\n\t\tinset 0 1px 0 rgba(255,255,255,0.04);\n\tanimation: slideUp 0.9s cubic-bezier(0.16,1,0.3,1) forwards;\n\ttransition: all 0.6s ease;\n\toverflow: hidden;\n\tborder-top: 3px solid transparent;\n\tborder-image: linear-gradient(90deg, #8b5cf6, #3b82f6, #ec4899, #8b5cf6) 1;\n}\n\n.card:hover {\n\tborder-color: rgba(139,92,246,0.2);\n\tbox-shadow:\n\t\t0 35px 90px rgba(0,0,0,0.6),\n\t\t0 0 80px rgba(139,92,246,0.08);\n\ttransform: translateY(-2px);\n}\n\nh1 {\n\tcolor: #f8fafc !important;\n\tfont-weight: 700 !important;\n\tfont-size: 28px !important;\n\tletter-spacing: -0.8px !important;\n\tline-height: 1.3 !important;\n\tbackground: linear-gradient(135deg, #f1f5f9 0%, #c4b5fd 100%);\n\t-webkit-background-clip: text;\n\t-webkit-text-fill-color: transparent;\n\tbackground-clip: text;\n}\n\nlabel {\n\tcolor: #94a3b8 !important;\n\tfont-weight: 500 !important;\n\tfont-size: 13px !important;\n\tletter-spacing: 0.5px !important;\n\ttext-transform: uppercase !important;\n}\n\n.form-input {\n\tbackground: var(--color-input-bg) !important;\n\tborder: 1px solid rgba(148,163,184,0.12) !important;\n\tborder-radius: var(--radius) !important;\n\tcolor: var(--color-text) !important;\n\tpadding: 14px 16px !important;\n\tfont-size: 15px !important;\n\tfont-family: var(--font-family) !important;\n\ttransition: all var(--transition) !important;\n}\n\n.form-input:hover {\n\tborder-color: rgba(139,92,246,0.25) !important;\n\tbackground: rgba(15,20,40,0.95) !important;\n}\n\n.form-input:focus {\n\tborder-color: var(--color-accent) !important;\n\tbox-shadow: 0 0 0 4px rgba(139,92,246,0.12), 0 0 30px rgba(139,92,246,0.04) !important;\n\toutline: none !important;\n\tbackground: rgba(15,20,40,1) !important;\n}\n\n.form-input::placeholder {\n\tcolor: rgba(100,116,139,0.5) !important;\n}\n\ntextarea.form-input {\n\tmin-height: 140px;\n\tresize: vertical;\n}\n\nbutton.submit-btn {\n\tbackground: linear-gradient(135deg, #8b5cf6, #6d28d9, #7c3aed) !important;\n\tbackground-size: 200% 200% !important;\n\tanimation: gradientMove 4s ease infinite !important;\n\tcolor: white !important;\n\tborder: none !important;\n\tborder-radius: var(--radius) !important;\n\tpadding: 16px 32px !important;\n\tfont-size: 15px !important;\n\tfont-weight: 600 !important;\n\tfont-family: var(--font-family) !important;\n\tcursor: pointer !important;\n\ttransition: all var(--transition) !important;\n\tletter-spacing: 0.8px;\n\ttext-transform: uppercase;\n}\n\nbutton.submit-btn:hover {\n\ttransform: translateY(-3px) !important;\n\tbox-shadow: 0 15px 40px rgba(139,92,246,0.3), 0 0 60px rgba(139,92,246,0.1) !important;\n}\n\nbutton.submit-btn:active {\n\ttransform: translateY(-1px) !important;\n\tbox-shadow: 0 8px 25px rgba(139,92,246,0.25) !important;\n}\n\nlabel.multiselect-label {\n\tdisplay: flex;\n\talign-items: center;\n\tcursor: pointer;\n\tpadding: 10px 0;\n\tposition: relative;\n}\n\nlabel.multiselect-label span {\n\tcolor: var(--color-muted);\n\tpadding-left: 12px;\n\ttransition: color var(--transition);\n}\n\nlabel.multiselect-label:hover span {\n\tcolor: var(--color-text);\n}\n\n@media (max-width: 640px) {\n\t.form-container { padding: 1rem 0.75rem; }\n\t.card { border-radius: 18px; }\n\th1 { font-size: 24px !important; }\n}"
+        }
+      },
+      "id": "9083ea66-9cda-4dd9-a929-66834a6daeb1",
+      "name": "Application Form3",
+      "type": "n8n-nodes-base.formTrigger",
+      "position": [
+        7216,
+        4096
+      ],
+      "webhookId": "2942260e-be32-45ed-8864-a2112a92dc5a",
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "binaryProperty": "Upload_CV",
+        "options": {}
+      },
+      "id": "ba7f979d-557a-4d0d-bffc-b05427c0981c",
+      "name": "Extract CV Text2",
+      "type": "n8n-nodes-base.mistralAi",
+      "position": [
+        7424,
+        4096
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "R3YYJZo6e6olnwbZ",
+          "name": "Mistral Cloud account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "853759e8-bd81-41a6-88fb-549404c7d37c",
+      "name": "Gemini 2.0 Flash2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        7664,
+        4352
+      ],
+      "typeVersion": 1,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ZWNlllhgiVf4hrlh",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"positionApplied\": {\n      \"type\": \"string\",\n      \"description\": \"The position the candidate applied for: Fullstack Developer, Frontend Developer, or Backend Developer\"\n    },\n    \"experienceLevel\": {\n      \"type\": \"string\",\n      \"description\": \"Detected experience level: JUNIOR (1-2 years), SENIOR (more than 2 years), or INSUFFICIENT (less than 1 year)\"\n    },\n    \"yearsOfExperience\": {\n      \"type\": \"number\",\n      \"description\": \"Total years of relevant professional experience detected in the CV\"\n    },\n    \"fieldRelevance\": {\n      \"type\": \"string\",\n      \"description\": \"The candidate primary professional field relevance. One of: RELEVANT_DIRECT, RELEVANT_ADJACENT, IRRELEVANT\"\n    },\n    \"scoreCeiling\": {\n      \"type\": \"integer\",\n      \"description\": \"Maximum possible score based on field relevance. RELEVANT_DIRECT=10, RELEVANT_ADJACENT=6, IRRELEVANT=2\"\n    },\n    \"requirementScores\": {\n      \"type\": \"object\",\n      \"description\": \"Individual scores for each of the requirements. Keys are r1 through r8, values are numbers (0, 0.5, or the max weight for that requirement).\"\n    },\n    \"rawScore\": {\n      \"type\": \"number\",\n      \"description\": \"Sum of all requirement scores before ceiling is applied\"\n    },\n    \"qualificationRate\": {\n      \"type\": \"integer\",\n      \"description\": \"Final score: min(scoreCeiling, round(rawScore)). Integer 0-10.\"\n    },\n    \"ratingDisplay\": {\n      \"type\": \"string\",\n      \"description\": \"Human-readable rating, e.g. 3/10, 7/10\"\n    },\n    \"category\": {\n      \"type\": \"string\",\n      \"description\": \"QUALIFIED if finalScore >= 7, REVIEW if 4-6, NOT_QUALIFIED if <= 3\"\n    },\n    \"explanation\": {\n      \"type\": \"string\",\n      \"description\": \"Point-by-point analysis. For each requirement: state STRONG_MET, PARTIAL, or MISSING with exact evidence quoted from CV.\"\n    },\n    \"keyFindings\": {\n      \"type\": \"string\",\n      \"description\": \"Summary: field relevance assessment, experience level (Junior/Senior), ceiling applied, strongest qualifications, critical gaps, and final hiring recommendation.\"\n    }\n  },\n  \"required\": [\n    \"positionApplied\",\n    \"experienceLevel\",\n    \"yearsOfExperience\",\n    \"fieldRelevance\",\n    \"scoreCeiling\",\n    \"requirementScores\",\n    \"rawScore\",\n    \"qualificationRate\",\n    \"ratingDisplay\",\n    \"category\",\n    \"explanation\",\n    \"keyFindings\"\n  ],\n  \"additionalProperties\": false\n}"
+      },
+      "id": "d0928f93-24ff-4f3c-9b7f-9644f20fe5ea",
+      "name": "JSON Output Parser2",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        7936,
+        4352
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<system_instructions>\nYou are a STRICT and OBJECTIVE AI Hiring Evaluator for a tech company. You evaluate CVs for three developer positions: Fullstack Developer, Frontend Developer, and Backend Developer.\n\nYour task is to:\n1. Read the candidate's CV thoroughly.\n2. Identify the position they applied for (given below).\n3. Determine their experience level based on TOTAL YEARS of relevant professional work:\n   - INSUFFICIENT: less than 1 year of relevant experience\n   - JUNIOR: 1 to 2 years of relevant experience (inclusive)\n   - SENIOR: more than 2 years of relevant experience\n4. Score the candidate using the rubric specific to their applied position.\n5. Apply hard caps based on field relevance and experience.\n6. Return a fair, honest rating from 0 to 10.\n\nYOUR DEFAULT ASSUMPTION: Start from score 0. Only add points when you find CONCRETE, SPECIFIC evidence in the CV.\nDO NOT give points just because a candidate lists a skill — they must show WHERE and HOW they used it (project, company, role, dates).\n</system_instructions>\n\n<applied_position>\n{{ $json.positionApplied }}\n</applied_position>\n\n<field_relevance_rules>\nBefore scoring, classify the candidate's PRIMARY professional field relative to the applied position:\n\nRELEVANT_DIRECT (ceiling = 10):\n- For Frontend Developer: Frontend Developer, Web Developer, UI Developer, Full-Stack Developer with frontend focus\n- For Backend Developer: Backend Developer, Full-Stack Developer with backend focus, API Developer, Server-Side Developer\n- For Fullstack Developer: Full-Stack Developer, Web Developer with both frontend AND backend evidence\n- Candidate MUST have demonstrable coding experience in the relevant stack.\n\nRELEVANT_ADJACENT (ceiling = 6):\n- For Frontend: Backend Developer who shows some HTML/CSS/JS knowledge; Mobile Developer with React Native\n- For Backend: Frontend Developer who shows some server-side or database knowledge\n- For Fullstack: Developers who are strong in only one side (frontend-only or backend-only)\n- UI/UX Designer who also codes (must show code evidence)\n\nIRRELEVANT (ceiling = 2):\n- Graphic Designer, Illustrator, Photographer, Videographer\n- Marketing, Sales, HR, Finance, Management without tech\n- IT Support, System Admin without web/backend development\n- Student with no professional experience\n- Any candidate with ZERO evidence of relevant coding or development work\n\nCRITICAL: If a CV has NO coding projects, NO relevant frameworks, NO professional experience in development — they are IRRELEVANT regardless of their claimed title.\n</field_relevance_rules>\n\n<experience_level_detection>\nTo determine yearsOfExperience:\n- Count only PROFESSIONAL work experience (internships count as 0.5x)\n- Sum up durations from all relevant job roles with dates\n- If dates are missing or vague, estimate conservatively\n- Education/academic projects do NOT count as professional experience\n\nExperience Level Classification:\n- INSUFFICIENT: yearsOfExperience < 1\n- JUNIOR: 1 <= yearsOfExperience <= 2\n- SENIOR: yearsOfExperience > 2\n</experience_level_detection>\n\n<scoring_rubric_frontend>\nUSE THIS RUBRIC ONLY IF position = \"Frontend Developer\"\n\nTotal possible raw score: 10 points across 8 requirements.\n\nREQUIREMENT 1 (Weight: 2.5) — Relevant Frontend Experience with Dates\n- STRONG_MET (2.5): CV shows 1+ years frontend roles with dates, companies, responsibilities\n- PARTIAL (1.25): Has frontend work but dates are vague or experience < 1 year\n- MISSING (0): No frontend work history\n\nREQUIREMENT 2 (Weight: 2.0) — JavaScript / TypeScript Skills\n- STRONG_MET (2.0): Used in named projects/companies with context (not just listed)\n- PARTIAL (1.0): Listed as a skill without project context\n- MISSING (0): Not mentioned\n\nREQUIREMENT 3 (Weight: 2.0) — Frontend Framework (React, Vue, Angular, Next.js, etc.)\n- STRONG_MET (2.0): Built real projects using a framework (names projects/companies)\n- PARTIAL (1.0): Listed framework but no project detail\n- MISSING (0): No framework mentioned\n\nREQUIREMENT 4 (Weight: 1.0) — CSS / Styling Skills (Tailwind, SASS, Styled-Components, CSS Modules)\n- STRONG_MET (1.0): Used in real projects with context\n- PARTIAL (0.5): Just listed, no context\n- MISSING (0): Not mentioned\n\nREQUIREMENT 5 (Weight: 0.75) — API Integration (REST, GraphQL, Axios, Fetch)\n- STRONG_MET (0.75): Built or consumed APIs in projects with evidence\n- PARTIAL (0.375): Mentioned but vague\n- MISSING (0): Not mentioned\n\nREQUIREMENT 6 (Weight: 0.5) — State Management (Redux, Zustand, Context API, Pinia, Vuex)\n- STRONG_MET (0.5): Used in production/real projects\n- PARTIAL (0.25): Listed only\n- MISSING (0): Not mentioned\n\nREQUIREMENT 7 (Weight: 0.5) — Version Control / Git\n- STRONG_MET (0.5): Git used in team projects, PR/branch workflow mentioned\n- PARTIAL (0.25): Just listed \"Git\" as skill\n- MISSING (0): Not mentioned\n\nREQUIREMENT 8 (Weight: 0.75) — Portfolio / Projects Quality & CV Presentation\n- STRONG_MET (0.75): Has named real projects, GitHub/portfolio links, well-structured CV\n- PARTIAL (0.375): Some projects listed but vague\n- MISSING (0): No projects, no portfolio, chaotic CV\n</scoring_rubric_frontend>\n\n<scoring_rubric_backend>\nUSE THIS RUBRIC ONLY IF position = \"Backend Developer\"\n\nTotal possible raw score: 10 points across 8 requirements.\n\nREQUIREMENT 1 (Weight: 2.5) — Relevant Backend Experience with Dates\n- STRONG_MET (2.5): CV shows 1+ years backend roles with dates, companies, responsibilities\n- PARTIAL (1.25): Has backend work but dates vague or experience < 1 year\n- MISSING (0): No backend work history\n\nREQUIREMENT 2 (Weight: 2.0) — Programming Language (Python, Java, Node.js, Go, PHP, C#, etc.)\n- STRONG_MET (2.0): Used in named backend projects/companies with context\n- PARTIAL (1.0): Listed as a skill without project context\n- MISSING (0): Not mentioned\n\nREQUIREMENT 3 (Weight: 2.0) — Backend Framework (Express, Django, FastAPI, Spring, Laravel, NestJS, etc.)\n- STRONG_MET (2.0): Built real backend projects using a framework\n- PARTIAL (1.0): Listed framework but no project detail\n- MISSING (0): No framework mentioned\n\nREQUIREMENT 4 (Weight: 1.0) — Database (MySQL, PostgreSQL, MongoDB, Redis, etc.)\n- STRONG_MET (1.0): Used in real projects with context (schema design, queries, optimization)\n- PARTIAL (0.5): Listed only, no context\n- MISSING (0): Not mentioned\n\nREQUIREMENT 5 (Weight: 0.75) — API Design (REST, GraphQL, gRPC, WebSocket)\n- STRONG_MET (0.75): Designed or built APIs in projects with evidence\n- PARTIAL (0.375): Mentioned API work without specifics\n- MISSING (0): Not mentioned\n\nREQUIREMENT 6 (Weight: 0.5) — Authentication / Security (JWT, OAuth, bcrypt, CORS, etc.)\n- STRONG_MET (0.5): Implemented auth in real projects\n- PARTIAL (0.25): Listed only\n- MISSING (0): Not mentioned\n\nREQUIREMENT 7 (Weight: 0.5) — Version Control / Git\n- STRONG_MET (0.5): Git used in team projects, workflows mentioned\n- PARTIAL (0.25): Just listed\n- MISSING (0): Not mentioned\n\nREQUIREMENT 8 (Weight: 0.75) — Portfolio / Projects Quality & CV Presentation\n- STRONG_MET (0.75): Has named real backend projects, GitHub/portfolio, well-structured CV\n- PARTIAL (0.375): Some projects listed but vague\n- MISSING (0): No projects, no portfolio, chaotic CV\n</scoring_rubric_backend>\n\n<scoring_rubric_fullstack>\nUSE THIS RUBRIC ONLY IF position = \"Fullstack Developer\"\n\nTotal possible raw score: 10 points across 8 requirements.\n\nREQUIREMENT 1 (Weight: 2.0) — Relevant Fullstack/Web Experience with Dates\n- STRONG_MET (2.0): CV shows 1+ years in web/fullstack roles with dates and responsibilities\n- PARTIAL (1.0): Has relevant experience but dates vague or < 1 year\n- MISSING (0): No relevant work history\n\nREQUIREMENT 2 (Weight: 1.5) — Frontend Skills (HTML, CSS, JavaScript + a frontend framework)\n- STRONG_MET (1.5): Used in named real projects with context\n- PARTIAL (0.75): Listed but no project detail\n- MISSING (0): Not mentioned\n\nREQUIREMENT 3 (Weight: 1.5) — Backend Skills (Server-side language + framework + database)\n- STRONG_MET (1.5): Built real backend with language + framework + DB with context\n- PARTIAL (0.75): Listed but no project detail\n- MISSING (0): Not mentioned\n\nREQUIREMENT 4 (Weight: 1.25) — Full Project Evidence (both frontend + backend in same or different projects)\n- STRONG_MET (1.25): Shows projects that use BOTH frontend and backend\n- PARTIAL (0.625): Only one side demonstrated in projects\n- MISSING (0): No project evidence for either side\n\nREQUIREMENT 5 (Weight: 1.0) — Database & Data Handling\n- STRONG_MET (1.0): Used databases in real projects with evidence (MySQL, PostgreSQL, MongoDB, etc.)\n- PARTIAL (0.5): Listed only\n- MISSING (0): Not mentioned\n\nREQUIREMENT 6 (Weight: 0.75) — API Integration / Design (REST, GraphQL)\n- STRONG_MET (0.75): Designed or consumed APIs in real projects\n- PARTIAL (0.375): Mentioned vaguely\n- MISSING (0): Not mentioned\n\nREQUIREMENT 7 (Weight: 0.5) — Version Control / Git\n- STRONG_MET (0.5): Git used in team or personal projects with workflow mentioned\n- PARTIAL (0.25): Just listed\n- MISSING (0): Not mentioned\n\nREQUIREMENT 8 (Weight: 0.5) — Portfolio / Projects Quality & CV Presentation\n- STRONG_MET (0.5): Well-structured CV, named projects with both frontend and backend components\n- PARTIAL (0.25): Some projects listed but incomplete or vague\n- MISSING (0): No projects, no portfolio, chaotic/unstructured CV\n</scoring_rubric_fullstack>\n\n<hard_caps>\nApply these caps AFTER calculating rawScore. They OVERRIDE the raw score:\n\n1. If fieldRelevance = IRRELEVANT → finalScore = min(2, rawScore). NEVER exceed 2.\n2. If fieldRelevance = RELEVANT_ADJACENT → finalScore = min(6, rawScore). NEVER exceed 6.\n3. If fieldRelevance = RELEVANT_DIRECT → finalScore = min(10, rawScore).\n\n4. Experience-based caps (apply within fieldRelevance cap):\n   - If experienceLevel = INSUFFICIENT (< 1 year):\n     → finalScore = min(finalScore, 3). Maximum score is 3 regardless of skills listed.\n   - If experienceLevel = JUNIOR (1-2 years):\n     → finalScore = min(finalScore, 6). A junior can score at most 6/10.\n     → A well-qualified junior with strong skills should score 4-6.\n   - If experienceLevel = SENIOR (> 2 years):\n     → No additional cap from experience. Score based on full rubric (can reach 7-10 if skills match).\n\n5. Absolute rules:\n   - NO candidate with ZERO coding projects should EVER exceed 2/10.\n   - NO candidate from an unrelated field (graphic design, marketing, etc.) should EVER exceed 2/10.\n   - Just listing skills without project context should NOT push anyone above 5/10.\n</hard_caps>\n\n<scoring_examples>\nEXAMPLE 1: Graphic Designer applying for Frontend Developer\nfieldRelevance: IRRELEVANT\nscoreCeiling: 2\nyearsOfExperience: 0\nexperienceLevel: INSUFFICIENT\nAll requirements: MISSING\nrawScore: 0\nfinalScore: 0\nratingDisplay: \"0/10\"\ncategory: NOT_QUALIFIED\n\nEXAMPLE 2: Junior Frontend Developer (1.5 years, basic React)\nfieldRelevance: RELEVANT_DIRECT\nscoreCeiling: 10\nyearsOfExperience: 1.5\nexperienceLevel: JUNIOR\nr1: STRONG_MET (1.5 years, showed projects) = 2.5\nr2: PARTIAL (JS listed, 1 project context) = 1.0\nr3: PARTIAL (React listed but minimal project) = 1.0\nr4: PARTIAL = 0.5\nr5: MISSING = 0\nr6: MISSING = 0\nr7: PARTIAL = 0.25\nr8: PARTIAL = 0.375\nrawScore: 5.625 → round = 6\nJunior cap: min(6, 6) = 6\nfinalScore: 6\nratingDisplay: \"6/10\"\ncategory: REVIEW\n\nEXAMPLE 3: Senior Backend Developer (4 years, Django + PostgreSQL)\nfieldRelevance: RELEVANT_DIRECT\nscoreCeiling: 10\nyearsOfExperience: 4\nexperienceLevel: SENIOR\nr1: STRONG_MET = 2.5\nr2: STRONG_MET (Python) = 2.0\nr3: STRONG_MET (Django) = 2.0\nr4: STRONG_MET (PostgreSQL) = 1.0\nr5: STRONG_MET (REST APIs) = 0.75\nr6: PARTIAL (JWT mentioned) = 0.25\nr7: STRONG_MET = 0.5\nr8: STRONG_MET = 0.75\nrawScore: 9.75 → round = 10\nfinalScore: 10\nratingDisplay: \"10/10\"\ncategory: QUALIFIED\n\nEXAMPLE 4: Junior Backend Developer applying for Fullstack (1 year, only server-side)\nfieldRelevance: RELEVANT_ADJACENT (backend only, no frontend evidence)\nscoreCeiling: 6\nyearsOfExperience: 1\nexperienceLevel: JUNIOR\nr1: STRONG_MET = 2.0\nr2: PARTIAL = 0.75\nr3: MISSING = 0\nr4: MISSING = 0\nr5: PARTIAL = 0.375\nr6: PARTIAL = 0.375\nr7: PARTIAL = 0.25\nr8: PARTIAL = 0.25\nrawScore: 4.0\nAdjacent cap: min(6, 4) = 4\nJunior cap: min(4, 6) = 4\nfinalScore: 4\nratingDisplay: \"4/10\"\ncategory: REVIEW\n\nEXAMPLE 5: Student (0 years experience, listed skills only)\nfieldRelevance: IRRELEVANT (no professional experience, just academic)\nscoreCeiling: 2\nyearsOfExperience: 0\nexperienceLevel: INSUFFICIENT\nAll requirements: MISSING or at best PARTIAL for a few\nrawScore: 1.0\nfinalScore: 1\nratingDisplay: \"1/10\"\ncategory: NOT_QUALIFIED\n</scoring_examples>\n\n<anti_inflation_rules>\nMANDATORY CHECKS before submitting your evaluation:\n\n1. Does the candidate have ZERO relevant coding projects? → Score MUST be 0-2.\n2. Is the candidate from an unrelated field? → Score MUST be 0-2.\n3. Is the candidate JUNIOR (1-2 years)? → Score MUST NOT exceed 6.\n4. Is the candidate INSUFFICIENT (<1 year)? → Score MUST NOT exceed 3.\n5. Skills listed without project context = PARTIAL at best, NEVER STRONG_MET.\n6. If you cannot find specific evidence in the CV, the skill is MISSING. Do not assume.\n7. Scores of 7+ are only for SENIOR candidates with strong, proven skills.\n8. A score of 9-10 means the candidate is exceptional with rich project history.\n9. Re-read your score. Ask: \"Does this person truly deserve X/10 for this role?\"\n</anti_inflation_rules>\n\n<evaluation_process>\nFollow these steps IN ORDER:\n\nSTEP 1: Read the entire CV carefully.\nSTEP 2: Identify the applied position from <applied_position>.\nSTEP 3: Determine fieldRelevance (RELEVANT_DIRECT, RELEVANT_ADJACENT, or IRRELEVANT) relative to the applied position.\nSTEP 4: Count total professional years of experience → assign experienceLevel (INSUFFICIENT / JUNIOR / SENIOR).\nSTEP 5: Select the correct rubric (frontend / backend / fullstack).\nSTEP 6: For each requirement, find SPECIFIC EVIDENCE. Assign STRONG_MET, PARTIAL, or MISSING.\nSTEP 7: Calculate rawScore = sum of weighted scores.\nSTEP 8: Apply field relevance ceiling.\nSTEP 9: Apply experience level cap.\nSTEP 10: finalScore = min(fieldCeiling, experienceCap, round(rawScore)).\nSTEP 11: Determine category: >=7 QUALIFIED, 4-6 REVIEW, <=3 NOT_QUALIFIED.\nSTEP 12: Double-check against anti-inflation rules.\nSTEP 13: Return the complete JSON output.\n</evaluation_process>\n\n<candidate_cv>\n{{ $json.cvText }}\n</candidate_cv>\n\nEvaluate this CV STRICTLY following ALL rules above. Return valid JSON matching the schema.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a STRICT and OBJECTIVE AI Hiring Evaluator. Evaluate the candidate's CV for the applied position. Classify experience: JUNIOR = 1-2 years, SENIOR = more than 2 years, INSUFFICIENT = less than 1 year. A junior developer scores at most 6/10. A senior developer can score up to 10/10 based on skill evidence. An irrelevant candidate (e.g., graphic designer) scores at most 2/10. Only credit skills backed by CONCRETE project or work evidence. Return valid JSON."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "8e87a019-0fe7-4c84-bb90-2a0d41d015a1",
+      "name": "AI Qualification2",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        7776,
+        4096
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "typeVersion": 1.7
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Get original form data from Application Form trigger\nconst formData = $('Application Form3').item.json;\n\n// Get AI output from the chain (previous node)\nconst aiOutput = $input.item.json;\n\n// ============ ROBUST OUTPUT PARSING ============\nlet parsed = null;\n\nif (aiOutput.output && typeof aiOutput.output === 'object' && aiOutput.output.qualificationRate !== undefined) {\n  parsed = aiOutput.output;\n} else if (typeof aiOutput.output === 'string') {\n  try {\n    parsed = JSON.parse(aiOutput.output);\n  } catch(e) {\n    const txt = aiOutput.output;\n    const si = txt.indexOf('{');\n    const ei = txt.lastIndexOf('}');\n    if (si !== -1 && ei > si) {\n      try { parsed = JSON.parse(txt.substring(si, ei + 1)); } catch(e2) {}\n    }\n  }\n}\n\nif (!parsed && aiOutput.qualificationRate !== undefined) {\n  parsed = aiOutput;\n}\n\nif (!parsed && typeof aiOutput.text === 'string') {\n  try {\n    parsed = JSON.parse(aiOutput.text);\n  } catch(e) {\n    const txt = aiOutput.text;\n    const si = txt.indexOf('{');\n    const ei = txt.lastIndexOf('}');\n    if (si !== -1 && ei > si) {\n      try { parsed = JSON.parse(txt.substring(si, ei + 1)); } catch(e2) {}\n    }\n  }\n}\n\n// Fallback jika parsing total gagal\nif (!parsed || parsed.qualificationRate === undefined) {\n  parsed = {\n    qualificationRate: 0,\n    positionApplied: formData['Position Applied'] || 'Unknown',\n    experienceLevel: 'UNKNOWN',\n    yearsOfExperience: 0,\n    fieldRelevance: 'UNKNOWN',\n    scoreCeiling: 10,\n    rawScore: 0,\n    category: 'ERROR',\n    explanation: 'AI output parsing failed. Please retry.',\n    keyFindings: 'ERROR: Could not parse AI evaluation output.'\n  };\n}\n\n// ============ EXTRACT & NORMALIZE ============\nlet rating = Number(parsed.qualificationRate || 0);\nconst fieldRelevance = (parsed.fieldRelevance || 'UNKNOWN').toUpperCase();\nconst positionApplied = parsed.positionApplied || formData['Position Applied'] || 'Unknown';\nconst scoreCeiling = Number(parsed.scoreCeiling || 10);\n\n// Ambil experienceLevel & yearsOfExperience dari AI output\nconst aiExperienceLevel = (parsed.experienceLevel || 'UNKNOWN').toUpperCase();\nconst aiYears = Number(parsed.yearsOfExperience);\n\n// Normalisasi: jika AI kembalikan format pecahan 0.0-1.0 (jarang), konversi ke 0-10\nif (rating > 0 && rating < 1) {\n  rating = Math.round(rating * 10);\n}\nrating = Math.max(0, Math.min(10, Math.round(rating)));\n\n// ============ FIELD RELEVANCE CEILING ============\n// Hanya potong skor jika field kandidat tidak relevan dengan posisi\nif (fieldRelevance === 'IRRELEVANT' && rating > 2) {\n  rating = 2;\n} else if (fieldRelevance === 'RELEVANT_ADJACENT' && rating > 6) {\n  rating = 6;\n}\n// RELEVANT_DIRECT: tidak ada pemotongan dari sisi field relevance\n\n// ============ EXPERIENCE LEVEL CAP ============\n// Gunakan label dari AI sebagai sumber utama.\n// Gunakan yearsOfExperience sebagai fallback HANYA jika label = UNKNOWN.\nlet experienceLevel = aiExperienceLevel;\n\nif (experienceLevel === 'UNKNOWN' && !isNaN(aiYears) && aiYears > 0) {\n  if (aiYears < 1) {\n    experienceLevel = 'INSUFFICIENT';\n  } else if (aiYears <= 2) {\n    experienceLevel = 'JUNIOR';\n  } else {\n    experienceLevel = 'SENIOR';\n  }\n}\n\n// Terapkan cap berdasarkan level pengalaman\nif (experienceLevel === 'INSUFFICIENT') {\n  // Kurang dari 1 tahun: maks 3/10\n  if (rating > 3) rating = 3;\n} else if (experienceLevel === 'JUNIOR') {\n  // 1-2 tahun: maks 6/10\n  if (rating > 6) rating = 6;\n}\n// SENIOR (> 2 tahun) atau UNKNOWN: tidak ada cap tambahan\n\n// ============ FINAL CLAMP 0-10 ============\nrating = Math.max(0, Math.min(10, rating));\n\nconst ratingDisplay = rating + '/10';\nconst yearsOfExperience = isNaN(aiYears) ? 0 : aiYears;\n\n// ============ KATEGORI ============\nlet category;\nif (parsed.category === 'ERROR') {\n  category = 'ERROR';\n} else if (rating >= 7) {\n  category = 'QUALIFIED';\n} else if (rating >= 4) {\n  category = 'REVIEW';\n} else {\n  category = 'NOT_QUALIFIED';\n}\n\n// Catatan penyesuaian jika skor diubah dari output AI\nlet explanation = parsed.explanation || '';\nconst originalRating = Number(parsed.qualificationRate || 0);\nif (rating !== originalRating) {\n  explanation += '\\n\\n[SYSTEM NOTE: Score adjusted from ' + originalRating + ' to ' + rating +\n    '. Applied caps: ' + fieldRelevance + ' ceiling + ' + experienceLevel + ' level cap.]';\n}\n\nreturn {\n  json: {\n    'Full Name': formData['Full Name'] || '',\n    'Email': formData['Email'] || '',\n    'Date of Birth': formData['Date of Birth'] || '',\n    'Position Applied': positionApplied,\n    'experienceLevel': experienceLevel,\n    'yearsOfExperience': yearsOfExperience,\n    'submittedAt': formData['submittedAt'] || new Date().toISOString(),\n    'qualificationRate': rating,\n    'ratingDisplay': ratingDisplay,\n    'category': category,\n    'fieldRelevance': fieldRelevance,\n    'scoreCeiling': scoreCeiling,\n    'rawScore': Number(parsed.rawScore || 0),\n    'explanation': explanation,\n    'keyFindings': parsed.keyFindings || ''\n  }\n};\n"
+      },
+      "id": "5c4c0d0d-01b9-49bc-8cac-147cea344d29",
+      "name": "Prepare Final Data2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        8144,
+        4096
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1zFkEoUwDilIJWeIU87k8CL0g-wZyZ6yxTTLtbBfDvcM",
+          "mode": "list",
+          "cachedResultName": "CVs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zFkEoUwDilIJWeIU87k8CL0g-wZyZ6yxTTLtbBfDvcM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 169891795,
+          "mode": "list",
+          "cachedResultName": "Applications",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zFkEoUwDilIJWeIU87k8CL0g-wZyZ6yxTTLtbBfDvcM/edit#gid=169891795"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Position Applied",
+              "displayName": "Position Applied",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "experienceLevel",
+              "displayName": "experienceLevel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "yearsOfExperience",
+              "displayName": "yearsOfExperience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "submittedAt",
+              "displayName": "submittedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "qualificationRate",
+              "displayName": "qualificationRate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ratingDisplay",
+              "displayName": "ratingDisplay",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "explanation",
+              "displayName": "explanation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "keyFindings",
+              "displayName": "keyFindings",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "fc62b3b5-c58d-4d5a-8865-50d8c024994e",
+      "name": "Save to Applications2",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        8384,
+        4096
+      ],
+      "typeVersion": 4.6,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KV39Zip50YD5MQx3",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "name = 'data cv' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            },
+            {
+              "name": "pageSize",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "601742f8-7076-496b-aba6-337380095366",
+      "name": "Find data cv Folder2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        7504,
+        3792
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DZAz3SGHGH1YQyIj",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "condition-folder-has-files-01",
+              "leftValue": "={{ $json.files.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1e5877e3-f3b7-4068-84be-2a769ed82e02",
+      "name": "Folder Exists?2",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        7728,
+        3792
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"name\": \"data cv\",\n  \"mimeType\": \"application/vnd.google-apps.folder\"\n}",
+        "options": {}
+      },
+      "id": "6ce907ce-9b2d-4fc7-a68f-e7692af5bbfe",
+      "name": "Create data cv Folder2",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        7936,
+        3904
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DZAz3SGHGH1YQyIj",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ============ PREPARE UPLOAD: Merge binary CV + folder ID ============\n// This node bridges the binary data from Application Form2\n// with the folder ID from the search/create folder flow.\n\n// 1. Get folder ID from the previous node\nlet folderId = 'root';\n\nif ($json.id && typeof $json.id === 'string' && !$json.files) {\n  // Coming from Create Folder node - direct id\n  folderId = $json.id;\n} else if ($json.files && $json.files.length > 0) {\n  // Coming from IF(true) - passthrough from Find Folder\n  folderId = $json.files[0].id;\n}\n\n// 2. Get binary data from Application Form2\nconst formItem = $('Application Form3').first();\nconst binaryData = formItem.binary;\nconst binaryKey = binaryData ? Object.keys(binaryData)[0] : 'data';\nconst fullName = formItem.json['Full Name'] || 'Unknown';\nconst fileName = fullName + ' - CV - ' + new Date().toISOString().slice(0, 10) + '.pdf';\n\n// 3. Return combined data: folder ID in json + binary CV file\nreturn {\n  json: {\n    folderId: folderId,\n    fileName: fileName,\n    binaryKey: binaryKey\n  },\n  binary: binaryData\n};"
+      },
+      "id": "c57eb2dc-0001-4fdb-9bfe-f6ee83c59ba2",
+      "name": "Prepare Upload2",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        8144,
+        3776
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "Upload_CV",
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "id": "a7430467-91f5-416e-8441-c062ef508fb4",
+      "name": "Upload CV to Drive3",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        8384,
+        3936
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DZAz3SGHGH1YQyIj",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Normalize CV Data": {
+      "main": [
+        [
+          {
+            "node": "AI Qualification2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Application Form3": {
+      "main": [
+        [
+          {
+            "node": "Extract CV Text2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Find data cv Folder2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract CV Text2": {
+      "main": [
+        [
+          {
+            "node": "Normalize CV Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 2.0 Flash2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Qualification2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Qualification2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Qualification2": {
+      "main": [
+        [
+          {
+            "node": "Prepare Final Data2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Final Data2": {
+      "main": [
+        [
+          {
+            "node": "Save to Applications2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find data cv Folder2": {
+      "main": [
+        [
+          {
+            "node": "Folder Exists?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Folder Exists?2": {
+      "main": [
+        [
+          {
+            "node": "Prepare Upload2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create data cv Folder2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create data cv Folder2": {
+      "main": [
+        [
+          {
+            "node": "Prepare Upload2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Upload2": {
+      "main": [
+        [
+          {
+            "node": "Upload CV to Drive3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload CV to Drive3": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6437f241-b302-4bf3-87b7-1dcc9a0749fd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "51dcd1137aa01c62f39906a544cb5b1fec54deeab2f6227419f7b4a655e739a4"
+  },
+  "nodeGroups": [],
+  "id": "LUtIt6bapZjeYMxO",
+  "tags": []
+}
